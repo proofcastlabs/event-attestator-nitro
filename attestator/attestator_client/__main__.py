@@ -2,16 +2,22 @@
 
 import argparse
 import asyncio
+import json
 import logging
 import socket
+import sys
 
 
 from .client import AttestatorClient
 
 
-async def main():
+async def main(args):
     """Setup and run the attestator client."""
     parser = argparse.ArgumentParser(prog=__package__)
+    parser.add_argument("cmd", help="command to pass to the attestator server")
+    parser.add_argument(
+        "cmd_args", nargs="*", help="command arguments to pass to the attestator server"
+    )
     parser.add_argument(
         "-c",
         "--cid",
@@ -32,7 +38,7 @@ async def main():
         action="store_true",
         help="assume the client is connecting to a server started inside a normal docker container",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if args.debug:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,9 +50,12 @@ async def main():
     reader, writer = await asyncio.open_connection(sock=sock)
 
     attestator_client = AttestatorClient()
-    await attestator_client.run(reader, writer)
+    return await attestator_client.run(args.cmd, args.cmd_args, reader, writer)
 
 
-logging.basicConfig(level=logging.DEBUG)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
 
-asyncio.run(main())
+    ret = asyncio.run(main(sys.argv[1:]))
+
+    print(json.dumps(ret.as_dict()))
