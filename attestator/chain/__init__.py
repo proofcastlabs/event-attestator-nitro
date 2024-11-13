@@ -3,3 +3,7 @@
 
 class ChainException(Exception):
     """ChainException class."""
+
+
+class RpcException(Exception):
+    """ChainException class."""
