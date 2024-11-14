@@ -2,6 +2,9 @@
 
 import logging
 
+import toml
+
+from ..chain.utils import create_chain_state_from_config
 from ..messages import (
     ERROR_RESPONSE,
     INVALID_REQUEST_TYPE,
@@ -20,6 +23,20 @@ logger = logging.getLogger(__name__)
 
 class AttestatorServer:
     """AttestatorServer class."""
+
+    def __init__(self, state):
+        self.state = state
+
+    @classmethod
+    def from_config_toml(cls, config):
+        """Build an AttestatorServer with the given configuration."""
+        config = toml.load(config)
+
+        state = {}
+        for chain, chain_config in config["networks"].items():
+            state[chain] = create_chain_state_from_config(chain, chain_config)
+
+        return cls(state)
 
     async def run(self, reader, writer):
         """Run the server once a stream as been established."""

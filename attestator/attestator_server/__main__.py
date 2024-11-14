@@ -14,6 +14,7 @@ SOCK_BACKLOG = 10
 async def main():
     """Setup and run the attestator server."""
     parser = argparse.ArgumentParser(prog=__package__)
+    parser.add_argument("config", help="attestator blockchain configuration file")
     parser.add_argument(
         "-p",
         "--port",
@@ -38,7 +39,7 @@ async def main():
 
     sock.listen(SOCK_BACKLOG)
 
-    attestator_server = AttestatorServer()
+    attestator_server = AttestatorServer.from_config_toml(args.config)
 
     server = await asyncio.start_server(attestator_server.run, sock=sock)
 

@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 aiohttp = "*"
 eth-account = "*"
+toml = "*"
 
 [dev-packages]
 pylint = "*"
