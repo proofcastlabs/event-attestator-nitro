@@ -1,7 +1,11 @@
 """Chain utilities."""
 
+import asyncio
+
 from . import CHAIN, EOS, EVM, ChainException
+from .eos import EosChainException
 from .eos.state import EosState
+from .eos.rpc import get_eos_transaction
 
 
 def create_chain_state_from_config(chain, config):
@@ -39,3 +43,37 @@ def find_consensus_element(data, threshold):
             consensus = e
             break
     return consensus
+
+
+async def sign_events(events, chain, state, version):
+    """Sign `events` on `chain` with the given chain `state`."""
+    protocol = CHAIN[chain]["protocol"]
+
+    if protocol == EVM:
+        pass
+    if protocol == EOS:
+        try:
+            (tx_id,) = events
+        except ValueError:
+            raise EosChainException(
+                f"Invalid event details: expected `[transaction_id]`, received {events}"
+            ) from None
+
+        txs = await asyncio.gather(
+            *(get_eos_transaction(tx_id, rpc) for rpc in state.rpcs),
+            return_exceptions=True,
+        )
+
+        if (consensus := find_consensus_element(txs, state.threshold)) is None:
+            txs_str = ", ".join(
+                map(str, filter(lambda tx: isinstance(tx, Exception), txs))
+            )
+            raise EosChainException(f"No consensus found, endpoint returns: {txs_str}")
+
+        filtered_actions = state.filter_transaction(consensus)
+
+        return state.sign_actions(filtered_actions, version)
+
+    # This is here mostly for the linter, an initialized chain should not belong to an unsupported
+    # protocol
+    raise ChainException(f"Protocol {protocol} not supported")
