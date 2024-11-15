@@ -29,6 +29,16 @@ class EosState(ChainState):
         """Return the chain id for the chain set for this state."""
         return CHAIN[self.chain]["id"]
 
+    def filter_transaction(self, transaction):
+        """Return alls the actions that match the events schema stored."""
+        matching_actions = []
+        for action in transaction.actions:
+            for account, name in self.events:
+                if action.act.account == account and action.act.name == name:
+                    matching_actions.append(action)
+                    break
+        return matching_actions
+
     def sign_actions(self, actions, version):
         """Sign `actions` for `version` with the standard encoding.
 
