@@ -1,6 +1,6 @@
 """EOS blockchain representations."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from ...utils import dataclass_to_field_set as to_set, format_set
 from . import EosChainException
@@ -113,7 +113,25 @@ class EosAction:
     timestamp: str
     trx_id: str
 
+    # Removed in equality comparison
     elapsed: str | None = None
+
+    def __eq__(self, value):
+        if not isinstance(value, EosAction):
+            return False
+
+        self_dict = asdict(self)
+        try:
+            del self_dict["elapsed"]
+        except KeyError:
+            pass
+        value_dict = asdict(value)
+        try:
+            del value_dict["elapsed"]
+        except KeyError:
+            pass
+
+        return self_dict == value_dict
 
     @classmethod
     def from_json(cls, action_json):
@@ -147,6 +165,15 @@ class EosTransaction:
 
     cache_expires_in: int | None = None
     cached: bool | None = None
+
+    def __eq__(self, value):
+        if not isinstance(value, EosTransaction):
+            return False
+        return (
+            self.actions == value.actions
+            and self.executed == value.executed
+            and self.trx_id == value.trx_id
+        )
 
     @classmethod
     def from_json(cls, tx_json):
