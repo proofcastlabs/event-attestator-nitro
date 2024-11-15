@@ -1,0 +1,6 @@
+[networks.eos]
+endpoints = ["https://eos.hyperion.eosrio.io/v2/history/get_transaction",]
+consensus_threshold = 10
+events = [
+  ["eosio.token", "transfer"],
+]
