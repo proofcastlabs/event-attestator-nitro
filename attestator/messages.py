@@ -33,6 +33,7 @@ class VsockMessage:
 # Message types
 PING = "ping"
 PONG = "pong"
+SIGN_EVENT = "sign-event"
 
 
 @dataclasses.dataclass
@@ -45,7 +46,9 @@ class VSockRequest(VsockMessage):
 
 ERROR_RESPONSE = "error"
 INVALID_REQUEST_TYPE = "invalid-request-type"
+NOT_ENOUGH_ARGUMENTS = "not-enough-arguments"
 SUCCESS_RESPONSE = "success"
+UNINITIALIZED = "uninitialized"
 
 
 @dataclasses.dataclass

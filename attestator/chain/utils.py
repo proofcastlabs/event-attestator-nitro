@@ -18,9 +18,20 @@ def create_chain_state_from_config(chain, config):
     if protocol == EVM:
         pass
     if protocol == EOS:
-        return EosState(
-            chain, config["events"], config["consensus_threshold"], config["endpoints"]
-        )
+        threshold = config["consensus_threshold"]
+        endpoints = config["endpoints"]
+        if len(endpoints) // 2 + 1 > threshold:
+            raise ChainException(
+                f"Consensus threshold too small: threshold {threshold}, endpoints {len(endpoints)}"
+            )
+        for event in config["events"]:
+            if len(event) != 2 and not all((isinstance(e, str) for e in event)):
+                raise ChainException(
+                    "Eos events must be defined as the following "
+                    "tuple of strings: (account, actionName)"
+                )
+
+        return EosState(chain, config["events"], threshold, endpoints)
     raise ChainException(f"Protocol {protocol} not supported")
 
 
