@@ -40,3 +40,15 @@ def format_tx_id(tx_id):
 def format_url(url):
     """Extract the authority portion from `url`."""
     return urlparse(url).netloc or url
+
+
+def left_pad_bytes_with_zeros(message, padding):
+    """Return `message` left padded with zeros, up to `padding` length."""
+    padding = max(padding - len(message), 0)
+
+    return b"\x00" * padding + message
+
+
+def to_0x_hex(*args):
+    """Return `args` bytes as the corresponding, 0x-prefixed, hexes."""
+    return ["0x" + arg.hex() for arg in args]
