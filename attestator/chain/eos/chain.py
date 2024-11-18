@@ -1,6 +1,6 @@
 """EOS blockchain representations."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, field
 
 from ...utils import dataclass_to_field_set as to_set, format_set
 from . import EosChainException
@@ -101,37 +101,22 @@ class EosAction:
     block_id: str
     block_num: int
     code_sequence: int
-    cpu_usage_us: int
     creator_action_ordinal: int
     global_sequence: int
-    inline_count: int
-    inline_filtered: int
-    net_usage_words: int
     producer: str
     receipts: list[EosReceipt]
-    signatures: list[str]
     timestamp: str
     trx_id: str
 
     # Removed in equality comparison
-    elapsed: str | None = None
-
-    def __eq__(self, value):
-        if not isinstance(value, EosAction):
-            return False
-
-        self_dict = asdict(self)
-        try:
-            del self_dict["elapsed"]
-        except KeyError:
-            pass
-        value_dict = asdict(value)
-        try:
-            del value_dict["elapsed"]
-        except KeyError:
-            pass
-
-        return self_dict == value_dict
+    account_ram_deltas: list | None = field(default=None, compare=False)
+    cpu_usage_us: int | None = field(default=None, compare=False)
+    elapsed: str | None = field(default=None, compare=False)
+    inline_count: int | None = field(default=None, compare=False)
+    inline_filtered: int | None = field(default=None, compare=False)
+    net_usage_words: int | None = field(default=None, compare=False)
+    # Kept in equality comparison
+    signatures: list[str] | None = None
 
     @classmethod
     def from_json(cls, action_json):
@@ -155,25 +140,16 @@ class EosTransaction:
     # pylint: disable=too-many-instance-attributes
     """EosTransaction class."""
     actions: list[EosAction]
-    cached_lib: bool
+    cached_lib: bool = field(compare=False)
     executed: bool
-    last_indexed_block: int
-    last_indexed_block_time: int
-    lib: int
-    query_time_ms: float
+    last_indexed_block: int = field(compare=False)
+    last_indexed_block_time: int = field(compare=False)
+    lib: int = field(compare=False)
+    query_time_ms: float = field(compare=False)
     trx_id: str
 
-    cache_expires_in: int | None = None
-    cached: bool | None = None
-
-    def __eq__(self, value):
-        if not isinstance(value, EosTransaction):
-            return False
-        return (
-            self.actions == value.actions
-            and self.executed == value.executed
-            and self.trx_id == value.trx_id
-        )
+    cache_expires_in: int | None = field(default=None, compare=False)
+    cached: bool | None = field(default=None, compare=False)
 
     @classmethod
     def from_json(cls, tx_json):
