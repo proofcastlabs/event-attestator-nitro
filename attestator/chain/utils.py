@@ -75,7 +75,9 @@ async def sign_events(events, chain, state, version):
             return_exceptions=True,
         )
 
-        if (consensus := find_consensus_element(txs, state.threshold)) is None:
+        filtered_txs = [tx for tx in txs if not isinstance(tx, Exception)]
+
+        if (consensus := find_consensus_element(filtered_txs, state.threshold)) is None:
             txs_str = ", ".join(
                 map(str, filter(lambda tx: isinstance(tx, Exception), txs))
             )
