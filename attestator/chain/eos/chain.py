@@ -2,22 +2,8 @@
 
 from dataclasses import dataclass, field
 
-from ...utils import dataclass_to_field_set as to_set, format_set
+from ...utils import check_mismatched_fields
 from . import EosChainException
-
-
-def check_mismatched_fields(json_dict, cls):
-    """Throw if there's a field mismatch between the argument and the dataclass.
-
-    Fields are mismatched when they are either not provided but requested, or provided but not
-    requested."""
-    provided_not_requested = set(json_dict) - to_set(cls, include_nullable=True)
-    not_provided_requested = to_set(cls, include_nullable=False) - set(json_dict)
-
-    if mismatched := provided_not_requested | not_provided_requested:
-        raise EosChainException(
-            f"Mismatched arguments for `{cls.__name__}`: {format_set(mismatched)}"
-        )
 
 
 @dataclass
@@ -30,7 +16,7 @@ class EosAuthorization:
     @classmethod
     def from_json(cls, auth_json):
         """Create EosAuthorization from json."""
-        check_mismatched_fields(auth_json, cls)
+        check_mismatched_fields(auth_json, cls, EosChainException)
 
         return cls(**auth_json)
 
@@ -47,7 +33,7 @@ class EosAct:
     @classmethod
     def from_json(cls, act_json):
         """Create EosAct from json."""
-        check_mismatched_fields(act_json, cls)
+        check_mismatched_fields(act_json, cls, EosChainException)
 
         auths = act_json["authorization"]
         act_json["authorization"] = [EosAuthorization.from_json(a) for a in auths]
@@ -65,7 +51,7 @@ class EosAuth:
     @classmethod
     def from_json(cls, auth_json):
         """Create EosAuth from json."""
-        check_mismatched_fields(auth_json, cls)
+        check_mismatched_fields(auth_json, cls, EosChainException)
 
         return cls(**auth_json)
 
@@ -82,7 +68,7 @@ class EosReceipt:
     @classmethod
     def from_json(cls, rcpt_json):
         """Create EosReceipt from json."""
-        check_mismatched_fields(rcpt_json, cls)
+        check_mismatched_fields(rcpt_json, cls, EosChainException)
 
         auths = rcpt_json["auth_sequence"]
         rcpt_json["auth_sequence"] = [EosAuth.from_json(a) for a in auths]
@@ -124,7 +110,7 @@ class EosAction:
         # "@timestamp" duplicates "timestamp"
         del action_json["@timestamp"]
 
-        check_mismatched_fields(action_json, cls)
+        check_mismatched_fields(action_json, cls, EosChainException)
 
         act = action_json["act"]
         action_json["act"] = EosAct.from_json(act)
@@ -154,7 +140,7 @@ class EosTransaction:
     @classmethod
     def from_json(cls, tx_json):
         """Create EosTransaction from json."""
-        check_mismatched_fields(tx_json, cls)
+        check_mismatched_fields(tx_json, cls, EosChainException)
 
         actions = tx_json["actions"]
         tx_json["actions"] = [EosAction.from_json(a) for a in actions]

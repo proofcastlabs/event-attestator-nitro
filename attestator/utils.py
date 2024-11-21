@@ -5,6 +5,24 @@ import dataclasses
 from urllib.parse import urlparse
 
 
+def check_mismatched_fields(json_dict, dataclass, exception):
+    """Throw `exception` if there's a field mismatch between the `json_dict` and the `dataclass`.
+
+    Fields are mismatched when they are either not provided but requested, or provided but not
+    requested."""
+    provided_not_requested = set(json_dict) - dataclass_to_field_set(
+        dataclass, include_nullable=True
+    )
+    not_provided_requested = dataclass_to_field_set(
+        dataclass, include_nullable=False
+    ) - set(json_dict)
+
+    if mismatched := provided_not_requested | not_provided_requested:
+        raise exception(
+            f"Mismatched arguments for `{dataclass.__name__}`: {format_set(mismatched)}"
+        )
+
+
 def dataclass_to_field_set(dataclass, include_nullable):
     """Extract a set of fields names from a dataclass.
 
