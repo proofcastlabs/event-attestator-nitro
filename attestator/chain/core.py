@@ -1,4 +1,4 @@
-"""Chain utilities."""
+"""Core chain functionality."""
 
 import asyncio
 

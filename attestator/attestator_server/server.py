@@ -5,7 +5,7 @@ import logging
 import toml
 
 from ..chain import ChainException
-from ..chain.utils import create_chain_state_from_config, sign_events
+from ..chain.core import create_chain_state_from_config, sign_events
 from ..messages import (
     ERROR_RESPONSE,
     INVALID_REQUEST_TYPE,
