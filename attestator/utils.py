@@ -60,11 +60,18 @@ def format_url(url):
     return urlparse(url).netloc or url
 
 
-def left_pad_bytes_with_zeros(message, padding):
-    """Return `message` left padded with zeros, up to `padding` length."""
+def pad_bytes_with_zeros(message, padding, pad_right=False):
+    """Return `message` padded with zeros, up to `padding` length."""
     padding = max(padding - len(message), 0)
 
+    if pad_right:
+        return message + b"\x00" * padding
     return b"\x00" * padding + message
+
+
+def from_0x_hex(*args):
+    """Return 0x-prefixed `args` hexes as the corresponding bytes."""
+    return [bytes.fromhex(arg[2:]) for arg in args]
 
 
 def to_0x_hex(*args):

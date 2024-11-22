@@ -3,7 +3,7 @@
 import json
 
 from ...crypto import sha256_and_sign_with_key
-from ...utils import left_pad_bytes_with_zeros, to_0x_hex
+from ...utils import pad_bytes_with_zeros, to_0x_hex
 from .. import CHAIN, CHAIN_PROTOCOL, EOS, ChainState
 
 
@@ -67,10 +67,8 @@ class EosState(ChainState):
             block_hash = bytes.fromhex(action.block_id)
             tx_hash = bytes.fromhex(action.trx_id)
 
-            event_account = left_pad_bytes_with_zeros(account.encode(), 32)
-            event_action = (
-                left_pad_bytes_with_zeros(name.encode(), 32) + b"\x00" * 32 * 3
-            )
+            event_account = pad_bytes_with_zeros(account.encode(), 32)
+            event_action = pad_bytes_with_zeros(name.encode(), 32) + b"\x00" * 32 * 3
             event_data = encode_event_data(data)
 
             event_payload = event_account + event_action + event_data
