@@ -2,8 +2,8 @@
 
 import argparse
 import asyncio
-import json
 import logging
+import pprint
 import socket
 import sys
 
@@ -63,4 +63,4 @@ if __name__ == "__main__":
 
     ret = asyncio.run(main(sys.argv[1:]))
 
-    print(json.dumps(ret.as_dict()))
+    pprint.pp(ret)
