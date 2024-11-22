@@ -31,6 +31,7 @@ class VsockMessage:
 
 
 # Message types
+GET_ATTESTATION = "get-attestation"
 PING = "ping"
 PONG = "pong"
 SIGN_EVENT = "sign-event"
@@ -47,6 +48,7 @@ class VSockRequest(VsockMessage):
 ERROR_RESPONSE = "error"
 INVALID_REQUEST_TYPE = "invalid-request-type"
 NOT_ENOUGH_ARGUMENTS = "not-enough-arguments"
+NO_CONFIG = "server-started-with-no-config"
 SUCCESS_RESPONSE = "success"
 UNINITIALIZED = "uninitialized"
 

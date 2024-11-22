@@ -1,15 +1,18 @@
 """Attestator server."""
 
 import logging
+import os
 
 import toml
 
-from ..chain import ChainException
+from ..chain import ChainException, ChainState
 from ..chain.core import create_chain_state_from_config, sign_events
 from ..messages import (
     ERROR_RESPONSE,
+    GET_ATTESTATION,
     INVALID_REQUEST_TYPE,
     NOT_ENOUGH_ARGUMENTS,
+    NO_CONFIG,
     PING,
     PONG,
     SIGN_EVENT,
@@ -22,6 +25,8 @@ from ..messages import (
 )
 
 
+ATTESTATION_EXEC = "./attestation"
+SUCCESS_PREFIX = "Success:"
 VERSION = b"\x01"
 
 
@@ -31,19 +36,39 @@ logger = logging.getLogger(__name__)
 class AttestatorServer:
     """AttestatorServer class."""
 
-    def __init__(self, state):
+    def __init__(self, state, config=None):
         self.state = state
+        self.config = config
 
     @classmethod
     def from_config_toml(cls, config):
         """Build an AttestatorServer with the given configuration."""
-        config = toml.load(config)
+        config_toml = toml.load(config)
 
         state = {}
-        for chain, chain_config in config["networks"].items():
+        for chain, chain_config in config_toml["networks"].items():
             state[chain] = create_chain_state_from_config(chain, chain_config)
 
-        return cls(state)
+        return cls(state, config)
+
+    def get_attestation(self):
+        """Return NSM-backed attestation, including the event signing key and the configuration."""
+        if self.config is None:
+            return VSockResponse(response_type=ERROR_RESPONSE, response=[NO_CONFIG])
+        if ChainState.PK is None:
+            return VSockResponse(response_type=ERROR_RESPONSE, response=[UNINITIALIZED])
+
+        # The attestation binary expects user data, nonce and public key arguments. I'm reading the
+        # configuration directly from its file to avoid handling escapes
+        attestation_out = os.popen(
+            f'{ATTESTATION_EXEC} "$(cat {self.config})" "" {ChainState.PK.address}'
+        ).read()
+
+        if (success := attestation_out.removeprefix(SUCCESS_PREFIX)) != attestation_out:
+            return VSockResponse(
+                response_type=SUCCESS_RESPONSE, response=[success.strip()]
+            )
+        return VSockResponse(response_type=ERROR_RESPONSE, response=[attestation_out])
 
     async def sign_events(self, request):
         """Sign appropriate events with the corresponding chain state information."""
@@ -71,7 +96,9 @@ class AttestatorServer:
         logger.info("Server started on %s:%d", address, port)
         async for msg in reader:
             request = VSockRequest.from_json(vsock_message_to_dict(msg))
-            if request.request_type == PING:
+            if request.request_type == GET_ATTESTATION:
+                resp = self.get_attestation()
+            elif request.request_type == PING:
                 resp = VSockResponse(response_type=SUCCESS_RESPONSE, response=[PONG])
             elif request.request_type == SIGN_EVENT:
                 resp = await self.sign_events(request)
