@@ -6,7 +6,9 @@ from . import CHAIN, EOS, EVM, ChainException
 from .eos import EosChainException
 from .eos.state import EosState
 from .eos.rpc import get_eos_transaction
+from .evm import EvmChainException
 from .evm.state import EvmState
+from .evm.rpc import get_evm_transaction
 
 
 def create_chain_state_from_config(chain, config):
@@ -68,7 +70,29 @@ async def sign_events(events, chain, state, version):
     protocol = CHAIN[chain]["protocol"]
 
     if protocol == EVM:
-        pass
+        try:
+            (tx_id,) = events
+        except ValueError:
+            raise EvmChainException(
+                f"Invalid event details: expected `[transaction_id]`, received {events}"
+            ) from None
+
+        txs = await asyncio.gather(
+            *(get_evm_transaction(tx_id, rpc) for rpc in state.rpcs),
+            return_exceptions=True,
+        )
+
+        filtered_txs = [tx for tx in txs if not isinstance(tx, Exception)]
+
+        if (consensus := find_consensus_element(filtered_txs, state.threshold)) is None:
+            txs_str = ", ".join(
+                map(str, filter(lambda tx: isinstance(tx, Exception), txs))
+            )
+            raise EvmChainException(f"No consensus found, endpoint returns: {txs_str}")
+
+        filtered_logs = state.filter_transaction(consensus)
+
+        return state.sign_logs(filtered_logs, version)
     if protocol == EOS:
         try:
             (tx_id,) = events
