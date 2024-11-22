@@ -23,7 +23,12 @@ async def main(args):
         "--cid",
         type=int,
         default=socket.VMADDR_CID_HOST,
-        help="enclave cid",
+        help="enclave cid, ignored in debug mode",
+    )
+    parser.add_argument(
+        "--host",
+        default="localhost",
+        help="connection host, used in debug mode",
     )
     parser.add_argument(
         "-p",
@@ -42,7 +47,7 @@ async def main(args):
 
     if args.debug:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(("localhost", args.port))
+        sock.connect((args.host, args.port))
     else:
         sock = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)
         sock.connect((args.cid, args.port))

@@ -16,6 +16,11 @@ async def main():
     parser = argparse.ArgumentParser(prog=__package__)
     parser.add_argument("config", help="attestator blockchain configuration file")
     parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="connection host, used in debug mode",
+    )
+    parser.add_argument(
         "-p",
         "--port",
         type=int,
@@ -32,7 +37,7 @@ async def main():
 
     if args.debug:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(("0.0.0.0", args.port))
+        sock.bind((args.host, args.port))
     else:
         sock = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)
         sock.bind((socket.VMADDR_CID_ANY, args.port))
