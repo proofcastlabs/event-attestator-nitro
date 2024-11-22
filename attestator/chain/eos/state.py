@@ -83,16 +83,12 @@ class EosState(ChainState):
             )
 
             event_id, signature = sha256_and_sign_with_key(preimage, self.PK)
-            # Representing a signature as V + R + S, for Eos
-            signature = (
-                signature.v.to_bytes()
-                + signature.r.to_bytes(32)
-                + signature.s.to_bytes(32)
-            )
 
             (
                 event_id,
-                signature,
+                r,
+                s,
+                v,
                 version,
                 protocol,
                 chain_id,
@@ -101,7 +97,9 @@ class EosState(ChainState):
                 event_payload,
             ) = to_0x_hex(
                 event_id,
-                signature,
+                signature.r.to_bytes(32),
+                signature.s.to_bytes(32),
+                signature.v.to_bytes(),
                 version,
                 PROTOCOL,
                 self.chain_id,
@@ -120,7 +118,7 @@ class EosState(ChainState):
                     "block_id_hash": block_id_hash,
                     "event_payload": event_payload,
                     "event_id": event_id,
-                    "signature": signature,
+                    "signature": {"r": r, "s": s, "v": v},
                     "public_key": self.PK.address,
                 }
             )

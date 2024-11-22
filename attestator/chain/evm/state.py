@@ -70,23 +70,21 @@ class EvmState(ChainState):
             )
 
             event_id, signature = sha256_and_sign_with_key(preimage, self.PK)
-            # Representing a signature as R + S + V, for Evm
-            signature = (
-                signature.r.to_bytes(32)
-                + signature.s.to_bytes(32)
-                + signature.v.to_bytes()
-            )
 
             (
                 event_id,
-                signature,
+                r,
+                s,
+                v,
                 version,
                 protocol,
                 chain_id,
                 event_payload,
             ) = to_0x_hex(
                 event_id,
-                signature,
+                signature.r.to_bytes(32),
+                signature.s.to_bytes(32),
+                signature.v.to_bytes(),
                 version,
                 PROTOCOL,
                 self.chain_id,
@@ -103,7 +101,7 @@ class EvmState(ChainState):
                     "block_id_hash": log.blockHash,
                     "event_payload": event_payload,
                     "event_id": event_id,
-                    "signature": signature,
+                    "signature": {"r": r, "s": s, "v": v},
                     "public_key": self.PK.address,
                 }
             )
