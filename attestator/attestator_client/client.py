@@ -25,6 +25,7 @@ class AttestatorClient:
         request = VSockRequest(request_type=cmd, args=cmd_args).as_dict()
         logger.info("Sending request")
         writer.writelines([dict_to_vsock_message(request)])
+        writer.write_eof()
         await writer.drain()
 
         resp = await reader.readline()
