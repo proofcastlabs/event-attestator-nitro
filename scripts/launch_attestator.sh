@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -u -o pipefail
+set -e -u -o pipefail
 
 scripts_dir=$(dirname -- $0)
 cd $scripts_dir/../
@@ -15,20 +15,23 @@ fi
 
 echo "Building attestator..."
 docker build -t $attestator -f $scripts_dir/Dockerfile --build-arg ATTESTATOR_CONFIG=$ATTESTATOR_CONFIG .
-if (( $? )); then
-  echo "Could not build attestator, exiting..."
-  exit 1
-fi
 
 echo "Building enclave image..."
 nitro-cli build-enclave --docker-uri $attestator --output-file $eif_path
-if (( $? )); then
-  echo "Could not build enclave image, exiting..."
-  exit 1
-fi
 
 echo "Terminating running attestators, if any..."
 nitro-cli describe-enclaves | jq ".[] | select(.EnclaveName == \"$attestator\") | .EnclaveID" | xargs -I{} nitro-cli terminate-enclave --enclave-id {}
+
+echo "Writing vsock proxy script and configuration..."
+docker run --rm attestator pipenv run python -m attestator.traffic_forwarder --export-as-vsock-proxy-script ./config.toml > vsock_proxy.sh
+chmod +x vsock_proxy.sh
+docker run --rm attestator pipenv run python -m attestator.traffic_forwarder --export-as-allow-list ./config.toml > vsock-proxy-allowlist.yaml
+
+echo "Terminating running vsock proxies, if any..."
+pkill vsock-proxy || true
+
+echo "Starting vsock proxy script"
+./vsock_proxy.sh
 
 debug=""
 if [[ -v DEBUG ]]; then
@@ -43,9 +46,6 @@ echo "Cid: ${ATTESTATOR_CID:-100}"
 echo "Memory: ${ATTESTATOR_MEMORY:-2048}"
 
 nitro-cli run-enclave --eif-path $eif_path --cpu-count ${ATTESTATOR_CPU_COUNT:-2} --enclave-cid ${ATTESTATOR_CID:-100} --memory ${ATTESTATOR_MEMORY:-2048} $debug
-if (( $? )); then
-  echo "Could not start attestator, exiting..."
-fi
 
 cd -
 
