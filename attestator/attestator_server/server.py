@@ -36,20 +36,21 @@ logger = logging.getLogger(__name__)
 class AttestatorServer:
     """AttestatorServer class."""
 
-    def __init__(self, state, config=None):
+    def __init__(self, state, config=None, cert=None):
         self.state = state
         self.config = config
+        self.cert = cert
 
     @classmethod
-    def from_config_toml(cls, config):
-        """Build an AttestatorServer with the given configuration."""
+    def from_config_toml(cls, config, cert=None):
+        """Build an AttestatorServer with the given configuration and optional `cert` file."""
         config_toml = toml.load(config)
 
         state = {}
         for chain, chain_config in config_toml["networks"].items():
             state[chain] = create_chain_state_from_config(chain, chain_config)
 
-        return cls(state, config)
+        return cls(state, config, cert)
 
     def get_attestation(self):
         """Return NSM-backed attestation, including the event signing key and the configuration."""
@@ -85,7 +86,9 @@ class AttestatorServer:
             )
 
         try:
-            signed_events = await sign_events(args, chain, chain_state, VERSION)
+            signed_events = await sign_events(
+                args, chain, chain_state, VERSION, self.cert
+            )
         except ChainException as exc:
             return VSockResponse(response_type=ERROR_RESPONSE, response=[str(exc)])
         return VSockResponse(response_type=SUCCESS_RESPONSE, response=signed_events)

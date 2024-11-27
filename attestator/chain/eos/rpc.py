@@ -1,5 +1,7 @@
 """EOS rpc functionality."""
 
+import ssl
+
 import aiohttp
 
 from aiohttp.client_exceptions import ClientError
@@ -10,8 +12,9 @@ from .chain import EosTransaction
 
 TX_ENDPOINT = "/v2/history/get_transaction"
 
-async def get_eos_transaction(tx_id, endpoint, session=None):
-    """Get `tx_id` from `endpoint`, with an optional aiohttp `session`, if provided."""
+
+async def get_eos_transaction(tx_id, endpoint, session=None, cert=None):
+    """Get `tx_id` from `endpoint`, with optional aiohttp `session` and `cert` file, if provided."""
     close_session = False
     if session is None:
         session = aiohttp.ClientSession()
@@ -21,8 +24,12 @@ async def get_eos_transaction(tx_id, endpoint, session=None):
     if endpoint.endswith("/"):
         endpoint = endpoint[:-1]
     endpoint += TX_ENDPOINT
+
+    ssl_context = True
+    if cert is not None:
+        ssl_context = ssl.create_default_context(cafile=cert)
     try:
-        async with session.get(endpoint, params={"id": tx_id}) as resp:
+        async with session.get(endpoint, params={"id": tx_id}, ssl=ssl_context) as resp:
             eos_tx = EosTransaction.from_json(await resp.json())
     except ClientError as exc:
         raise RpcException(

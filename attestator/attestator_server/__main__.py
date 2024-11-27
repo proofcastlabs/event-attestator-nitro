@@ -28,6 +28,12 @@ async def main():
         help="listening port",
     )
     parser.add_argument(
+        "-c",
+        "--cert",
+        default=None,
+        help="custom certificates file for outbound network requests",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         action="store_true",
@@ -44,7 +50,7 @@ async def main():
 
     sock.listen(SOCK_BACKLOG)
 
-    attestator_server = AttestatorServer.from_config_toml(args.config)
+    attestator_server = AttestatorServer.from_config_toml(args.config, args.cert)
 
     server = await asyncio.start_server(attestator_server.run, sock=sock)
 

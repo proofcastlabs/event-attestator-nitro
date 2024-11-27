@@ -65,7 +65,7 @@ def find_consensus_element(data, threshold):
     return consensus
 
 
-async def sign_events(events, chain, state, version):
+async def sign_events(events, chain, state, version, cert=None):
     """Sign `events` on `chain` with the given chain `state`."""
     protocol = CHAIN[chain]["protocol"]
 
@@ -78,7 +78,7 @@ async def sign_events(events, chain, state, version):
             ) from None
 
         txs = await asyncio.gather(
-            *(get_evm_transaction(tx_id, rpc) for rpc in state.rpcs),
+            *(get_evm_transaction(tx_id, rpc, cert=cert) for rpc in state.rpcs),
             return_exceptions=True,
         )
 
@@ -102,7 +102,7 @@ async def sign_events(events, chain, state, version):
             ) from None
 
         txs = await asyncio.gather(
-            *(get_eos_transaction(tx_id, rpc) for rpc in state.rpcs),
+            *(get_eos_transaction(tx_id, rpc, cert=cert) for rpc in state.rpcs),
             return_exceptions=True,
         )
 
