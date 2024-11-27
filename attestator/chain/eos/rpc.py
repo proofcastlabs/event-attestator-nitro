@@ -8,6 +8,7 @@ from ...utils import format_tx_id, format_url
 from .. import RpcException
 from .chain import EosTransaction
 
+TX_ENDPOINT = "/v2/history/get_transaction"
 
 async def get_eos_transaction(tx_id, endpoint, session=None):
     """Get `tx_id` from `endpoint`, with an optional aiohttp `session`, if provided."""
@@ -17,6 +18,9 @@ async def get_eos_transaction(tx_id, endpoint, session=None):
         # Since we're outside of the context manager, the session needs to be closed manually below
         close_session = True
 
+    if endpoint.endswith("/"):
+        endpoint = endpoint[:-1]
+    endpoint += TX_ENDPOINT
     try:
         async with session.get(endpoint, params={"id": tx_id}) as resp:
             eos_tx = EosTransaction.from_json(await resp.json())
