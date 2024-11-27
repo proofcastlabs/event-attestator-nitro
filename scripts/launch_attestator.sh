@@ -13,8 +13,19 @@ if [[ ! -v ATTESTATOR_CONFIG ]]; then
   exit 1
 fi
 
+custom_certs=false
+if [[ ! -v ATTESTATOR_CERTS ]]; then
+  echo "ATTESTATOR_CERTS not set, using container defaults..."
+  custom_certs=true
+  certs_placeholder=$(mktemp -p .)
+fi
+
 echo "Building attestator..."
-docker build -t $attestator -f $scripts_dir/Dockerfile --build-arg ATTESTATOR_CONFIG=$ATTESTATOR_CONFIG .
+docker build -t $attestator -f $scripts_dir/Dockerfile --build-arg ATTESTATOR_CONFIG=$ATTESTATOR_CONFIG --build-arg ATTESTATOR_CERTS=${ATTESTATOR_CERTS:-$certs_placeholder} --build-arg ATTESTATOR_CERTS_ENABLED=$custom_certs .
+
+if [[ -v certs_placeholder ]]; then
+  rm $certs_placeholder
+fi
 
 echo "Building enclave image..."
 nitro-cli build-enclave --docker-uri $attestator --output-file $eif_path
