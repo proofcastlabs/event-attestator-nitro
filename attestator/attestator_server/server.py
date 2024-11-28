@@ -63,7 +63,7 @@ class AttestatorServer:
         # The attestation binary expects user data, nonce and public key arguments. I'm reading the
         # configuration directly from its file to avoid handling escapes
         attestation_out = os.popen(
-            f'{ATTESTATION_EXEC} "$(cat {self.config})" "" {ChainState.PK.address}'
+            f'{ATTESTATION_EXEC} "$(cat {self.config})" "" {pk_to_pub(ChainState.PK)}'
         ).read()
 
         if (success := attestation_out.removeprefix(SUCCESS_PREFIX)) != attestation_out:
