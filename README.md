@@ -102,11 +102,11 @@ within the project directory tree
 - `ATTESTATOR_CERTS`: if set but empty, use the cert file in `scripts/cert.pem`;
 if set to path, use that instead; if unset, use Alpine's certificates. Defaults
 to unset.
-- `ATTESTATOR_CPU_COUNT`: available cpus, defaults to 2.
-- `ATTESTATOR_CID`: server enclave's cid, defaults to 100. **Important**: this will
-impact the ability of the client to connect to the server, if the same change is
-not reflected in the client's configuration.
-- `ATTESTATOR_MEMORY`: available memory, defaults to 2048.
+- `ATTESTATOR_CPU_COUNT`: available cpus, defaults to `2`.
+- `ATTESTATOR_CID`: server enclave's cid, defaults to `100`. **Important**: this
+will impact the ability of the client to connect to the server, if the same change
+is not reflected in the client's configuration.
+- `ATTESTATOR_MEMORY`: available memory, defaults to `2048`.
 - `DEBUG`: if set, start the server enclave in debug mode and connect to its console.
 Defaults to unset.
 
@@ -115,3 +115,111 @@ Example invocation:
 ```bash
 DEBUG= ATTESTATOR_CONFIG=./config.toml ./scripts/launch_attestator.sh
 ```
+
+**Important**: configuration changes will only be effective once the launcher has
+been invoked again.
+
+### Event Attestator Client CLI requirements
+
+To interact with the EA client via the CLI, it's necessary to activate a Pipenv
+environment with the required dependencies.
+
+Assuming Pipenv's binary is available on your path, (see [requirements](#requirements)),
+from the project root, invoke:
+
+```bash
+pipenv install --ignore-pipfile
+```
+
+### Running the Event Attestator Client CLI
+
+If the EA Server was started with the default environment variables, the EA Client
+CLI can be invoked, from the project root, with:
+
+```bash
+pipenv run python -m attestator.attestator_client --cid 100 $cmd_and_cmd_args
+```
+
+Following is the CLI usage documentation.
+
+```bash
+usage: attestator.attestator_client [-h] [-c CID] [--host HOST] [-p PORT] [-d] cmd [cmd_args ...]
+
+positional arguments:
+  cmd                   command to pass to the attestator server
+  cmd_args              command arguments to pass to the attestator server
+
+options:
+  -h, --help            show this help message and exit
+  -c CID, --cid CID     enclave cid, ignored in debug mode
+  --host HOST           connection host, used in debug mode
+  -p PORT, --port PORT  connection port
+  -d, --debug           assume the client is connecting to a server started inside a normal docker container
+```
+
+Currently, the CLI supports the following commands:
+
+- `ping`: ping the EA server to establish whether it is active.
+- `sign-event $chain_id $tx_id`: request the signature of all configuration-compatible
+events for the transaction `$tx_id` on the blockchain `$chain_id`, if successful returns
+a list of signed events.
+- `get-attestation`: request attestation information, returns `[signignAddress,
+signingPubKey, Attestation]`, where `Attestation` is an NSM-backed attestation with
+`signingPubKey` and the EA Server configuration content.
+
+### Debugging
+
+The most likely cause for the failure of a `sign-event` request is lack of consensus,
+as a result of a too-large number of failed network requests. When that happens,
+the CLI will return an error message that will include the content of the network
+failure as thrown inside the python library.
+
+In the event that the issue persists:
+
+- If the response features a `Mismatched arguments` issue, the transaction id might
+be incorrect, check with a block explorer whether that is the case
+- `ssl` issues might be due to an endpoint whose identity was not successfully verified;
+if the offending endpoint is trusted, you can provide the EA Server with a `cert.pem`
+file (see [above](#running-the-event-attestator-server)) that includes the necessary
+certificates.
+
+It is possible to start the EA Server in debug mode, both locally or on a normal
+Docker container, for easier debugging. As a Docker container:
+
+```bash
+docker build -t attestator -f ./scripts/Dockerfile --build-arg ATTESTATOR_CONFIG=./config.toml  .
+docker run --rm -p 8080:8080 attestator pipenv run python -m attestator.attestator_server -d config.toml
+```
+
+This can be accessed from the EA Client CLI as:
+
+```bash
+pipenv run python -m attestator.attestator_client -d cmd $cmd_and_cmd_args
+```
+
+Notes:
+
+- `get-attestation` will not work in debug mode.
+- The attestator client can be dockerized as well, but that requires pointing it
+to the right Server address, with the right `--host` parameter.
+- Make sure that the `consensus_threshold` is not bigger than the number of configured
+endpoints for the same blockchain.
+
+### Utilities
+
+- `scripts/clean.sh`:
+  - Terminate any running EA Server enclave.
+  - Stop vsock proxies.
+  - Remove all artifacts (except place-holding `scripts/cert.pem`)
+- `scripts/deep_clean.sh`:
+  - Call `scripts/clean.sh`
+  - **Danger**: "factory reset" Docker. Docker build artifacts tend to persist even
+  with thorough pruning. Try this as a last resort to clean up some disk space.
+  **Don't use** if you care for anything else that Docker might be doing at the moment.
+  Reasonable alternative cleanup routine:
+
+  ```bash
+  docker container prune -f
+  docker image prune -a -f
+  docker system prune -af --volumes
+  ```
