@@ -5,6 +5,7 @@ import os
 
 import toml
 
+from ..crypto import pk_to_pub
 from ..chain import ChainException, ChainState
 from ..chain.core import create_chain_state_from_config, sign_events
 from ..messages import (
@@ -67,7 +68,12 @@ class AttestatorServer:
 
         if (success := attestation_out.removeprefix(SUCCESS_PREFIX)) != attestation_out:
             return VSockResponse(
-                response_type=SUCCESS_RESPONSE, response=[success.strip()]
+                response_type=SUCCESS_RESPONSE,
+                response=[
+                    ChainState.PK.address,
+                    pk_to_pub(ChainState.PK),
+                    success.strip(),
+                ],
             )
         return VSockResponse(response_type=ERROR_RESPONSE, response=[attestation_out])
 

@@ -2,7 +2,7 @@
 
 import json
 
-from ...crypto import sha256_and_sign_with_key
+from ...crypto import pk_to_pub, sha256_and_sign_with_key
 from ...utils import pad_bytes_with_zeros, to_0x_hex
 from .. import CHAIN, CHAIN_PROTOCOL, EOS, ChainState
 
@@ -119,7 +119,7 @@ class EosState(ChainState):
                     "event_payload": event_payload,
                     "event_id": event_id,
                     "signature": {"r": r, "s": s, "v": v},
-                    "public_key": self.PK.address,
+                    "public_key": pk_to_pub(self.PK),
                 }
             )
         return signed_actions
