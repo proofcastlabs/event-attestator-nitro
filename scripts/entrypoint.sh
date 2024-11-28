@@ -1,10 +1,8 @@
-#!bin/sh
+#!/bin/sh
 
 ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
 
-if $ATTESTATOR_CERTS_ENABLED; then
-  mv $ATTESTATOR_CERTS cert.pem
-else
+if ! $ATTESTATOR_CERTS_ENABLED; then
   cat /etc/ssl/certs/ca-certificates.crt > cert.pem
 fi
 
