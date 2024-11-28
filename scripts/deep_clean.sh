@@ -14,16 +14,7 @@ function confirm {
 
 confirm "WARNING! Make sure you absolutely know what you are doing. Proceed?"
 
-nitro-cli describe-enclaves | jq ".[] | select(.EnclaveName == \"attestator\") | .EnclaveID" |\
-    xargs -I{} nitro-cli terminate-enclave --enclave-id {}
-
-pkill vsock-proxy || true
+"$(dirname "$0")"/clean.sh
 
 sudo systemctl stop docker
 sudo rm -rf /var/lib/docker
-
-cd "$(dirname -- "$0")"/../
-
-rm ./*.eif vsock_proxy.sh vsock-proxy-allowlist.yaml 2>/dev/null || true
-
-cd -
