@@ -41,11 +41,22 @@ file. EA users can provide their own certificate file, see [configuration](#even
 
 #### AWS' Nitro-enabled EC2 instance
 
-todo!
+In order to launch a new nitro enclave create an Amazon AWS account and select a location (ie. N.Virginia).
+From the dashboard select a suitable machine for the use of Nitro enclave: the smallest available at the time of writing 
+is `c5.xlarge`.
+The preferred operating system is AL2023.
+Enable nitro in the advanced configuration menu.
+![alt text](image.png)
+For more infos about Amazon Nitro check:
+https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave.html
+
+Once the machine is started connect to it using ssh.
 
 #### `nitro-cli`
 
-todo!
+Install the nitro-cli following:
+https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-cli-install.html
+
 
 #### Docker
 
