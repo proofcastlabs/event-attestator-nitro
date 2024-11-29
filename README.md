@@ -41,22 +41,23 @@ file. EA users can provide their own certificate file, see [configuration](#even
 
 #### AWS' Nitro-enabled EC2 instance
 
-In order to launch a new nitro enclave create an Amazon AWS account and select a location (ie. N.Virginia).
-From the dashboard select a suitable machine for the use of Nitro enclave: the smallest available at the time of writing 
-is `c5.xlarge`.
-The preferred operating system is AL2023.
-Enable nitro in the advanced configuration menu.
-![alt text](image.png)
-For more infos about Amazon Nitro check:
-https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave.html
+In order to launch a new nitro enclave create an Amazon AWS account and select a
+location (i.e. N.Virginia). From the dashboard select a suitable machine for the
+use of Nitro enclave: the smallest available at the time of writing is `c5.xlarge`.
+The preferred operating system is `AL2023`.
 
-Once the machine is started connect to it using ssh.
+Enable nitro in the advanced configuration menu.
+
+![nitro selection](docs/image.png)
+
+For more information about Amazon Nitro check the [official documentation](https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave.html)
+
+Once the machine is started connect to it using `ssh`.
 
 #### `nitro-cli`
 
-Install the nitro-cli following:
-https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-cli-install.html
-
+To install the `nitro-cli` follow the [instructions](https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-cli-install.html)
+on the official documentation.
 
 #### Docker
 
@@ -172,11 +173,16 @@ Currently, the CLI supports the following commands:
 
 - `ping`: ping the EA server to establish whether it is active.
 - `sign-event $chain_id $tx_id`: request the signature of all configuration-compatible
-events for the transaction `$tx_id` on the blockchain `$chain_id`, if successful returns
-a list of signed events.
+events for the transaction `$tx_id` on the blockchain `$chain_id`; if successful,
+returns a list of signed events.
 - `get-attestation`: request attestation information, returns `[signignAddress,
 signingPubKey, Attestation]`, where `Attestation` is an NSM-backed attestation with
-`signingPubKey` and the EA Server configuration content.
+`signingPubKey` and the EA Server configuration content. **Important**: attestation
+details are tied to a specific EA Server enclave image, that is to a specific running
+enclave instance of a specific docker build. As such, they do not survive EA Server
+re-runs and even more so executable or configuration changes. This is by design,
+so that, once verified, the attestation certifies that a specific running instance
+and, most importantly, its signing key, are as advertised.
 
 ### Debugging
 
