@@ -184,6 +184,29 @@ re-runs and even more so executable or configuration changes. This is by design,
 so that, once verified, the attestation certifies that a specific running instance
 and, most importantly, its signing key, are as advertised.
 
+### Event Attestator API
+
+The EA comes with a built-in Flask API. The purpose of the API is to allow RESTful
+access to the EA Client, e.g. from a dapp.
+
+The EA API comes with the same requirements as the EA Client and can be started
+via Gunicorn as follows:
+
+```bash
+ATTESTATOR_CLIENT_CONFIG=$client_config pipenv run gunicorn -w 4 -b 0.0.0.0:8000 attestator.api:api_app
+```
+
+Where the `ATTESTATOR_CLIENT_CONFIG` env can be used to pass running arguments to
+the EA Client (see [above](#running-the-event-attestator-client-cli)). With the
+EA Server default configuration, for example, run:
+
+```bash
+ATTESTATOR_CLIENT_CONFIG="--cid 100" pipenv run gunicorn -w 4 -b 0.0.0.0:8000 attestator.api:api_app
+```
+
+Consider deploying the EA API using [nginx](https://docs.gunicorn.org/en/latest/deploy.html)
+or a reverse proxy of your choosing.
+
 ### Debugging
 
 The most likely cause for the failure of a `sign-event` request is lack of consensus,
