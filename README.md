@@ -207,6 +207,14 @@ ATTESTATOR_CLIENT_CONFIG="--cid 100" pipenv run gunicorn -w 4 -b 0.0.0.0:8000 at
 Consider deploying the EA API using [nginx](https://docs.gunicorn.org/en/latest/deploy.html)
 or a reverse proxy of your choosing.
 
+#### Example usage
+
+```bash
+curl -X POST -H 'Content-Type: application/json' -d '{"method":"getSignerDetails","params":[]}' $ENDPOINT_URL
+
+curl -X POST -H 'Content-Type: application/json' -d '{"method":"getSignedEvent","params":[$chain_id, $tx_id]}' $ENDPOINT_URL
+```
+
 ### Debugging
 
 The most likely cause for the failure of a `sign-event` request is lack of consensus,
